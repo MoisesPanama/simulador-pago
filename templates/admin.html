@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Panel admin · Simulador de Pago{% endblock %}
+{% block content %}
+<section class="panel panel-wide">
+    <p class="eyebrow">Administrador</p>
+    <h1>Transacciones</h1>
+    <p class="subtitle">El botón "Reembolsar" se deshabilita automáticamente cuando la pasarela de esa transacción no implementa <code>IPagoReembolsable</code>.</p>
+
+    {% if transacciones %}
+    <table class="tx-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Pasarela</th>
+                <th>Monto</th>
+                <th>Estado</th>
+                <th>Código</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for tx in transacciones %}
+            <tr>
+                <td class="mono">{{ tx.id_pedido }}</td>
+                <td><span class="chip chip-{{ tx.pasarela|lower }}">{{ tx.pasarela }}</span></td>
+                <td>${{ '%.2f'|format(tx.monto) }}</td>
+                <td><span class="status status-{{ tx.estado }}">{{ tx.estado }}</span></td>
+                <td class="mono">{{ tx.codigo_autorizacion or '—' }}</td>
+                <td>
+                    <form method="POST" action="{{ url_for('reembolsar', id_transaccion=tx.id_pedido) }}">
+                        <button type="submit"
+                            class="btn-refund"
+                            {{ 'disabled title="Esta pasarela no soporta reembolso automático"' | safe if not tx.puede_reembolsar or tx.estado != 'aprobado' }}>
+                            Reembolsar
+                        </button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="empty-state">Todavía no hay transacciones. <a href="{{ url_for('pedido') }}">Procesa un pago</a> para verlo aquí.</p>
+    {% endif %}
+</section>
+{% endblock %}

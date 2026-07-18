@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Confirmación · Simulador de Pago{% endblock %}
+{% block content %}
+<section class="panel panel-narrow">
+    <p class="eyebrow">Paso 2 de 2</p>
+
+    {% if tx %}
+        <div class="result-badge {{ 'result-ok' if tx.estado == 'aprobado' else 'result-fail' }}">
+            {{ '✓ Pago aprobado' if tx.estado == 'aprobado' else '✕ Pago rechazado' }}
+        </div>
+
+        <dl class="receipt">
+            <div><dt>Pasarela</dt><dd>{{ tx.pasarela }}</dd></div>
+            <div><dt>Monto</dt><dd>${{ '%.2f'|format(tx.monto) }}</dd></div>
+            <div><dt>ID de transacción</dt><dd class="mono">{{ tx.id_pedido }}</dd></div>
+            <div><dt>Código de autorización</dt><dd class="mono">{{ tx.codigo_autorizacion or '—' }}</dd></div>
+        </dl>
+
+        <p class="footnote">
+            {% if tx.puede_reembolsar %}
+                Esta transacción admite reembolso desde el panel administrativo.
+            {% else %}
+                {{ tx.pasarela }} no soporta reembolso automático en este simulador (ISP): no verás la opción en el panel.
+            {% endif %}
+        </p>
+    {% else %}
+        <p>No se encontró la transacción solicitada.</p>
+    {% endif %}
+
+    <a href="{{ url_for('pedido') }}" class="btn-secondary">Procesar otro pago</a>
+</section>
+{% endblock %}

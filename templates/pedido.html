@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Nuevo pago · Simulador de Pago{% endblock %}
+{% block content %}
+<section class="panel">
+    <p class="eyebrow">Paso 1 de 2</p>
+    <h1>¿Cuánto vas a cobrar?</h1>
+    <p class="subtitle">Ingresa el monto y elige la pasarela. El sistema delega en el adaptador correspondiente sin que necesites saber cómo habla cada API por dentro.</p>
+
+    <form method="POST" class="form-pedido" id="form-pedido">
+        <label for="monto">Monto a cobrar</label>
+        <div class="amount-input">
+            <span class="currency">$</span>
+            <input type="number" step="0.01" min="0.01" name="monto" id="monto" placeholder="0.00" required>
+        </div>
+
+        <label class="gateways-label">Pasarela de pago</label>
+        <div class="gateways">
+            {% for p in pasarelas %}
+            <input type="radio" name="pasarela" id="gw-{{ p }}" value="{{ p }}" {{ 'checked' if loop.first }} required>
+            <label for="gw-{{ p }}" class="gateway-card gateway-{{ p|lower }}">
+                <span class="gateway-name">{{ p }}</span>
+                <span class="gateway-hint">
+                    {% if p == "MercadoPago" %}Sin reembolso automático{% else %}Procesa y reembolsa{% endif %}
+                </span>
+            </label>
+            {% endfor %}
+        </div>
+
+        <button type="submit" class="btn-primary" id="btn-pagar">Procesar pago</button>
+    </form>
+</section>
+
+<script>
+document.getElementById('form-pedido').addEventListener('submit', function(e) {
+    const btn = document.getElementById('btn-pagar');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Contactando pasarela…';
+});
+</script>
+{% endblock %}
