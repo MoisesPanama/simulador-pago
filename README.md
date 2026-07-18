@@ -12,7 +12,7 @@ Regla de negocio clave: **MercadoPago no soporta reembolso automático** en este
 
 - **Adapter**: cada pasarela (`paypal_adapter.py`, `stripe_adapter.py`, `mercadopago_adapter.py`) traduce su lógica interna a una interfaz común que el resto del sistema entiende.
 - **ISP (Interface Segregation Principle)**: las interfaces están separadas en `IPagoProcesable`, `IPagoReembolsable` e `IPagoConsultable` (ABCs). Un adaptador solo implementa las interfaces que realmente soporta — por eso `mercadopago_adapter.py` **no hereda** de `IPagoReembolsable`, en vez de lanzar `NotImplementedError`.
-- **Facade**: `ProcesadorPagos` (en `procesador_pagos.py`) expone una API simple (`pagar()`, `reembolsar()`, `consultar_estado()`) y decide internamente, con `isinstance()`, si un adaptador soporta reembolso antes de delegarlo.
+- **Facade**: `ProcesadorPagos` (en `procesador_pagos.py`) expone una API simple (`pagar()`, `reembolsar()`, `consultar_estado()`, `listar_transacciones()`) y decide internamente, con `isinstance(adaptador, IPagoReembolsable)`, si un adaptador soporta reembolso antes de delegarlo. Se instancia una sola vez como `procesador_pagos` (singleton simple) y esa instancia es compartida por todas las rutas de Flask.
 
 Esta restricción de arquitectura también es **visible en la interfaz**: el botón "Reembolsar" del panel `/admin` aparece deshabilitado (con tooltip explicativo) cuando la transacción fue procesada por una pasarela que no soporta reembolsos.
 
@@ -43,12 +43,12 @@ simulador-pago/
 
 | Ruta | Método | Descripción |
 |---|---|---|
-| `/` | GET, POST | Formulario de pedido y procesamiento del pago |
-| `/confirmacion/<id_transaccion>` | GET | Resultado del pago |
+| `/` | GET, POST | Formulario de pedido (monto + pasarela) y procesamiento del pago vía el Facade |
+| `/confirmacion/<id_transaccion>` | GET | Resultado del pago devuelto por el Facade |
 | `/admin` | GET | Panel administrativo con historial de transacciones |
-| `/admin/reembolsar/<id_transaccion>` | POST | Reembolso (solo si la pasarela lo soporta) |
+| `/admin/reembolsar/<id_transaccion>` | POST | Reembolso (el Facade rechaza la operación sin tocar el adaptador si la pasarela no implementa `IPagoReembolsable`) |
 
-Las transacciones se guardan **en memoria** (diccionario), no hay base de datos.
+Las transacciones se guardan **en memoria**, dentro de un diccionario `self.transacciones` en `ProcesadorPagos` — no hay base de datos ni persistencia entre reinicios del servidor.
 
 ## Identidad visual
 
